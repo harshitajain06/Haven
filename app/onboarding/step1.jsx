@@ -1,0 +1,95 @@
+import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+export default function Step1Screen() {
+  const navigation = useNavigation();
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.skipButton} onPress={() => navigation.replace('Drawer')}>
+        <Text style={styles.skipText}>Skip</Text>
+      </TouchableOpacity>
+
+      <View style={styles.content}>
+        <Image 
+          source={require('../../assets/images/img_light_bulb_cuate.svg')} 
+          style={styles.image}
+          resizeMode="contain"
+        />
+        
+        <Text style={styles.title}>Step - 1</Text>
+        <Text style={styles.description}>
+          Firstly, Upload A Post With Your Problem{'\n'}And Receive Support From Fellow Users{'\n'}Of The App
+        </Text>
+      </View>
+
+      <View style={styles.footer}>
+        <View style={styles.pagination}>
+          <View style={[styles.dot, styles.activeDot]} />
+          <View style={styles.dot} />
+          <View style={styles.dot} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+  },
+  skipText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  image: {
+    width: 300,
+    height: 300,
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#000',
+  },
+  description: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#999',
+    lineHeight: 22,
+  },
+  footer: {
+    paddingBottom: 60,
+    alignItems: 'center',
+  },
+  pagination: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dot: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E0E0E0',
+  },
+  activeDot: {
+    backgroundColor: '#F4C430',
+  },
+});
+

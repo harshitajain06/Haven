@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, ActivityIndicator, Alert
-} from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '../../config/firebase';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import React, { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import {
+    ActivityIndicator, Alert,
+    ScrollView,
+    StyleSheet,
+    Text, TextInput, TouchableOpacity,
+    View
+} from 'react-native';
+import { auth } from '../../config/firebase';
 
 export default function AuthPage() {
   const navigation = useNavigation();
@@ -27,10 +30,10 @@ export default function AuthPage() {
   const [registerPassword, setRegisterPassword] = useState('');
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       navigation.replace('Drawer');
     }
-  }, [user]);
+  }, [user, loading]);
 
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) {

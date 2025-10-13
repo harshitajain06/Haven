@@ -7,13 +7,12 @@ import { Platform } from 'react-native';
 
 // Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyDq1kpquwpEkIMzEPr5o0aPv0eBiJbKWo0",
-  authDomain: "haven-94524.firebaseapp.com",
-  projectId: "haven-94524",
-  storageBucket: "haven-94524.firebasestorage.app",
-  messagingSenderId: "573667577968",
-  appId: "1:573667577968:web:55b7a46d5f80b251eba4b5",
-  measurementId: "G-979DDD728B"
+  apiKey: "AIzaSyBV2Q-_nJIcRHGUbhtwu8eKN9UAeaPvwQw",
+    authDomain: "fir-authentication-8abb6.firebaseapp.com",
+    projectId: "fir-authentication-8abb6",
+    storageBucket: "fir-authentication-8abb6.appspot.com",
+    messagingSenderId: "854259513422",
+    appId: "1:854259513422:web:9a3d38f04501b643f0ab1f"
 };
 
 // Initialize Firebase

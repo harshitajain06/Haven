@@ -38,6 +38,7 @@
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
+    "firebase": "^12.4.0",
     "install": "^0.13.0",
     "npm": "^11.4.2",
     "npx": "^10.2.2",

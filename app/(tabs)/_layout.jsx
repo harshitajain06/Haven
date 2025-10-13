@@ -1,20 +1,28 @@
 // src/navigation/StackLayout.jsx
-import React from "react";
-import { createStackNavigator } from "@react-navigation/stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreen from "./HomeScreen";
-import UploadScreen from "./UploadScreen";
-import ActivityScreen from "./ActivityScreen";
-import ProfileScreen from "./ProfileScreen";
-import LoginRegister from './index';
-import { Colors } from "../../constants/Colors";
-import { useColorScheme } from "../../hooks/useColorScheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from '@react-navigation/native';
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
+import { createStackNavigator } from "@react-navigation/stack";
 import { signOut } from 'firebase/auth';
+import React from "react";
 import { Alert } from 'react-native';
 import { auth } from "../../config/firebase";
+import { Colors } from "../../constants/Colors";
+import { useColorScheme } from "../../hooks/useColorScheme";
+import ForgotPasswordScreen from '../auth/forgot';
+import LoginScreen from '../auth/login';
+import SignUpScreen from '../auth/signup';
+import VerifyScreen from '../auth/verify';
+import Step1Screen from '../onboarding/step1';
+import Step2Screen from '../onboarding/step2';
+import Step3Screen from '../onboarding/step3';
+import ActivityScreen from "./ActivityScreen";
+import HomeScreen from "./HomeScreen";
+import ProfileScreen from "./ProfileScreen";
+import UploadScreen from "./UploadScreen";
+import LoginRegister from './index';
+import WelcomeScreen from './welcome';
 
 
 const Stack = createStackNavigator();
@@ -111,7 +119,15 @@ export default function StackLayout() {
         },
       }}
     >
-    <Stack.Screen name="LoginRegister" component={LoginRegister} />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="login" component={LoginScreen} />
+      <Stack.Screen name="signup" component={SignUpScreen} />
+      <Stack.Screen name="verify" component={VerifyScreen} />
+      <Stack.Screen name="forgot" component={ForgotPasswordScreen} />
+      <Stack.Screen name="step1" component={Step1Screen} />
+      <Stack.Screen name="step2" component={Step2Screen} />
+      <Stack.Screen name="step3" component={Step3Screen} />
+      <Stack.Screen name="LoginRegister" component={LoginRegister} />
       <Stack.Screen name="Drawer" component={DrawerNavigator} />
     </Stack.Navigator>
   );
