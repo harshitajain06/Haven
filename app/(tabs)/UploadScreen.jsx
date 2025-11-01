@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { addDoc, collection } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db, storage } from '../../config/firebase';
 
@@ -14,6 +14,12 @@ export default function UploadScreen() {
   const [loading, setLoading] = useState(false);
 
   const user = auth.currentUser;
+
+  // Generate a random avatar URL using DiceBear API
+  const randomAvatarUrl = useMemo(() => {
+    const seed = user?.uid || Math.random().toString(36).substring(7);
+    return `https://api.dicebear.com/7.x/avataaars/png?seed=${seed}&size=60`;
+  }, [user?.uid]);
 
   const handlePickMedia = async () => {
     try {
@@ -84,12 +90,11 @@ export default function UploadScreen() {
 
       <View style={styles.userInfo}>
         <Image 
-          source={{ uri: user?.photoURL || 'https://via.placeholder.com/60' }}
+          source={{ uri: user?.photoURL || randomAvatarUrl }}
           style={styles.avatar}
         />
         <View>
           <Text style={styles.userName}>{user?.displayName || 'Ardito Saputra'}</Text>
-          <Text style={styles.location}>Manchester, UK</Text>
         </View>
       </View>
 

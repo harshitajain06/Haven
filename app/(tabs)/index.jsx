@@ -189,7 +189,7 @@ function OAuthButtons() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: 23,
     paddingTop: 60,
     backgroundColor: '#fff',
     minHeight: '100%',

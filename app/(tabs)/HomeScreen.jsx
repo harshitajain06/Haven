@@ -1,14 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { arrayRemove, arrayUnion, collection, doc, increment, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { arrayRemove, arrayUnion, collection, doc, getDocs, increment, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, FlatList, Image, Platform, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../config/firebase';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  const fetchPosts = async () => {
+    try {
+      const q = query(collection(db, 'postshaven'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const postsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPosts(postsData);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'postshaven'), orderBy('createdAt', 'desc'));
@@ -47,9 +62,31 @@ export default function HomeScreen() {
     }
   };
 
-  const onRefresh = () => {
+  useEffect(() => {
+    if (refreshing && Platform.OS === 'web') {
+      const animation = Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      );
+      animation.start();
+      return () => animation.stop();
+    } else {
+      rotateAnim.setValue(0);
+    }
+  }, [refreshing, rotateAnim]);
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    try {
+      await fetchPosts();
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const renderPost = ({ item }) => {
@@ -65,7 +102,7 @@ export default function HomeScreen() {
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{item.userName || 'Anonymous'}</Text>
-            <Text style={styles.location}>{item.location || 'Location'}</Text>
+            {/* <Text style={styles.location}>{item.location || 'Location'}</Text> */}
           </View>
         </View>
 
@@ -73,7 +110,7 @@ export default function HomeScreen() {
           <Image 
             source={{ uri: item.imageUrl }}
             style={styles.postImage}
-            resizeMode="cover"
+            resizeMode={Platform.OS === 'web' ? 'contain' : 'cover'}
           />
         )}
 
@@ -107,9 +144,37 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Haven</Text>
-        <TouchableOpacity onPress={() => router.push('/screens/notifications')}>
-          <Ionicons name="notifications-outline" size={28} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {Platform.OS === 'web' && (
+            <TouchableOpacity 
+              onPress={onRefresh}
+              style={styles.reloadButton}
+              disabled={refreshing}
+            >
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      rotate: rotateAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg'],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <Ionicons 
+                  name={refreshing ? "refresh" : "refresh-outline"} 
+                  size={28} 
+                  color="#000"
+                />
+              </Animated.View>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => router.push('/screens/notifications')}>
+            <Ionicons name="notifications-outline" size={28} color="#000" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -118,7 +183,9 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          Platform.OS !== 'web' ? (
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          ) : undefined
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -149,6 +216,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  reloadButton: {
+    padding: 5,
   },
   listContent: {
     paddingVertical: 10,
@@ -183,8 +258,18 @@ const styles = StyleSheet.create({
   },
   postImage: {
     width: '100%',
-    height: 300,
-    backgroundColor: '#E0E0E0',
+    ...(Platform.OS === 'web' 
+      ? {
+          maxHeight: 600,
+          minHeight: 300,
+        }
+      : {
+          height: 400,
+          aspectRatio: 16 / 9,
+        }
+    ),
+    backgroundColor: '#fff',
+    alignSelf: 'center',
   },
   postContent: {
     paddingHorizontal: 15,

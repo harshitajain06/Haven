@@ -25,6 +25,13 @@ export default function Step1Screen() {
       </View>
 
       <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.nextButton}
+          onPress={() => navigation.navigate('step2')}
+        >
+          <Text style={styles.nextButtonText}>Next</Text>
+        </TouchableOpacity>
+
         <View style={styles.pagination}>
           <View style={[styles.dot, styles.activeDot]} />
           <View style={styles.dot} />
@@ -77,6 +84,20 @@ const styles = StyleSheet.create({
   footer: {
     paddingBottom: 60,
     alignItems: 'center',
+  },
+  nextButton: {
+    backgroundColor: '#F4C430',
+    marginHorizontal: 40,
+    borderRadius: 25,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '80%',
+  },
+  nextButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   pagination: {
     flexDirection: 'row',
