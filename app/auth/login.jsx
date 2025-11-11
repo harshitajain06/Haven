@@ -1,15 +1,24 @@
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth } from '../../config/firebase';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const [user, loading, error] = useAuthState(auth);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user && !loading) {
+      navigation.replace('Drawer');
+    }
+  }, [user, loading, navigation]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -17,14 +26,14 @@ export default function LoginScreen() {
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigation.replace('Drawer');
     } catch (error) {
       Alert.alert('Login Error', error.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -82,10 +91,10 @@ export default function LoginScreen() {
           <TouchableOpacity 
             style={styles.loginButton}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isLoading || loading}
           >
             <Text style={styles.loginButtonText}>
-              {loading ? 'LOGGING IN...' : 'LOGIN'}
+              {isLoading ? 'LOGGING IN...' : 'LOGIN'}
             </Text>
           </TouchableOpacity>
         </View>

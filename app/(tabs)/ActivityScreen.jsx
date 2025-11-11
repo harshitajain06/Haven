@@ -7,7 +7,6 @@ export default function ActivityScreen() {
   const router = useRouter();
 
   const activities = [
-    { icon: 'notifications-outline', title: 'Notifications', route: '/screens/notifications' },
     { icon: 'chatbubbles-outline', title: 'Messages', route: '/screens/messages' },
     { icon: 'calendar-outline', title: 'Case Progress', route: '/screens/case-progress' },
     { icon: 'eye-outline', title: 'Adult Zone', route: '/screens/adult-zone' },

@@ -92,16 +92,19 @@ export default function HomeScreen() {
   const renderPost = ({ item }) => {
     const userId = auth.currentUser?.uid;
     const hasLiked = item.likes?.includes(userId);
+    
+    // Use the same avatar logic as UploadScreen - DiceBear avatar for anonymous users
+    const anonymousAvatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=anonymous&size=60`;
 
     return (
       <View style={styles.postCard}>
         <View style={styles.postHeader}>
           <Image 
-            source={item.userPhoto ? { uri: item.userPhoto } : require('../../assets/images/img_profile_picture.png')}
+            source={{ uri: anonymousAvatarUrl }}
             style={styles.avatar}
           />
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.userName || 'Anonymous'}</Text>
+            <Text style={styles.userName}>Anonymous</Text>
             {/* <Text style={styles.location}>{item.location || 'Location'}</Text> */}
           </View>
         </View>

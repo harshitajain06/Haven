@@ -1,17 +1,26 @@
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../config/firebase';
 
 export default function SignUpScreen() {
   const navigation = useNavigation();
+  const [user, loading, error] = useAuthState(auth);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user && !loading) {
+      navigation.replace('Drawer');
+    }
+  }, [user, loading, navigation]);
 
   const handleSignUp = async () => {
     if (!fullName || !email || !password || !confirmPassword) {
@@ -29,7 +38,7 @@ export default function SignUpScreen() {
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, {
@@ -49,7 +58,7 @@ export default function SignUpScreen() {
     } catch (error) {
       Alert.alert('Sign Up Error', error.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -116,10 +125,10 @@ export default function SignUpScreen() {
           <TouchableOpacity 
             style={styles.signUpButton}
             onPress={handleSignUp}
-            disabled={loading}
+            disabled={isLoading || loading}
           >
             <Text style={styles.signUpButtonText}>
-              {loading ? 'SIGNING UP...' : 'SIGN UP'}
+              {isLoading ? 'SIGNING UP...' : 'SIGN UP'}
             </Text>
           </TouchableOpacity>
         </View>
