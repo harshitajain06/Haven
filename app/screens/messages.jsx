@@ -1,19 +1,68 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../../config/firebase';
 
 export default function MessagesScreen() {
   const router = useRouter();
-  const [conversations, setConversations] = useState([
-    {
-      id: '1',
-      name: 'Child Protection Services',
-      lastMessage: 'Hello Ankur! To now continue with the pr......',
-      avatar: 'https://via.placeholder.com/60',
-      time: '2m ago'
+  const navigation = useNavigation();
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const userId = auth.currentUser?.uid;
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
     }
-  ]);
+
+    // Fetch conversations for current user
+    const q = query(
+      collection(db, 'conversations'),
+      where('userId', '==', userId),
+      orderBy('updatedAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const conversationsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.recipientName || 'Child Protection Services',
+          lastMessage: data.lastMessage || 'No messages yet',
+          avatar: data.avatar || 'https://api.dicebear.com/7.x/avataaars/png?seed=childprotection&size=60',
+          time: data.lastMessageTime ? formatTime(data.lastMessageTime) : 'Just now',
+          caseStudyId: data.caseStudyId || null
+        };
+      });
+      setConversations(conversationsData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching conversations:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return 'Just now';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
 
   const renderConversation = ({ item }) => (
     <TouchableOpacity 
@@ -31,10 +80,20 @@ export default function MessagesScreen() {
     </TouchableOpacity>
   );
 
+  const handleBack = () => {
+    // Use goBack() to go back directly without reloading
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // Fallback: navigate to Activity screen if no history
+      navigation.navigate('Activity');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={handleBack}>
           <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Message</Text>
@@ -48,7 +107,18 @@ export default function MessagesScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No messages yet</Text>
+            <Text style={styles.emptyText}>
+              {loading ? 'Loading...' : 'No messages yet. Start a conversation to create a case study.'}
+            </Text>
+            {!loading && (
+              <TouchableOpacity 
+                style={styles.startButton}
+                onPress={() => router.push('/screens/chat?name=Child Protection Services')}
+              >
+                <Ionicons name="chatbubbles" size={20} color="#000" />
+                <Text style={styles.startButtonText}>Start New Conversation</Text>
+              </TouchableOpacity>
+            )}
           </View>
         }
       />
@@ -112,6 +182,22 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  startButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F4C430',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+  },
+  startButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
   },
 });
 

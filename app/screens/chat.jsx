@@ -1,60 +1,264 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { 
+  collection, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  serverTimestamp,
+  getDoc,
+  setDoc,
+  Timestamp
+} from 'firebase/firestore';
+import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../../config/firebase';
 
 export default function ChatScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const conversationId = params.id;
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      text: 'Hello, I want to start the procedure against my offender.',
-      sender: 'user',
-      time: '10:30 AM'
-    },
-    {
-      id: '2',
-      text: "Sure! First Tell me your name and age and we'll begin with the procedure as per your will.",
-      sender: 'bot',
-      time: '10:31 AM'
-    },
-    {
-      id: '3',
-      text: "My name is Ankur Ghosh. I'm 14 Years Old.",
-      sender: 'user',
-      time: '10:32 AM'
-    },
-    {
-      id: '4',
-      text: "Hello Ankur! To now continue with the procedure, send a message 'YES' here, to continue",
-      sender: 'bot',
-      time: '10:33 AM'
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [conversation, setConversation] = useState(null);
+  const userId = auth.currentUser?.uid;
+  const flatListRef = useRef(null);
 
-  const handleSend = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: Date.now().toString(),
-        text: message,
-        sender: 'user',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  // Load conversation and messages
+  useEffect(() => {
+    if (!conversationId || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    // Load conversation data
+    const conversationRef = doc(db, 'conversations', conversationId);
+    const unsubscribeConversation = onSnapshot(conversationRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setConversation({ id: snapshot.id, ...snapshot.data() });
+      }
+    });
+
+    // Load messages
+    const messagesRef = collection(db, 'conversations', conversationId, 'messages');
+    const q = query(messagesRef, orderBy('createdAt', 'asc'));
+    const unsubscribeMessages = onSnapshot(q, (snapshot) => {
+      const messagesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(doc.data().createdAt)
+      }));
+      setMessages(messagesData);
+      setLoading(false);
+      
+      // Scroll to bottom when new messages arrive
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+
+    return () => {
+      unsubscribeConversation();
+      unsubscribeMessages();
+    };
+  }, [conversationId, userId]);
+
+  // Create or get conversation
+  const getOrCreateConversation = async () => {
+    if (conversationId) {
+      return conversationId;
+    }
+
+    if (!userId) return null;
+
+    // Create new conversation
+    const newConversation = {
+      userId,
+      recipientName: 'Child Protection Services',
+      recipientId: 'child-protection-services',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/png?seed=childprotection&size=60',
+      lastMessage: '',
+      lastMessageTime: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    const conversationRef = await addDoc(collection(db, 'conversations'), newConversation);
+    return conversationRef.id;
+  };
+
+  // Create case study for conversation
+  const createCaseStudy = async (convId) => {
+    if (!userId || !convId) return null;
+
+    try {
+      // Check if case study already exists
+      const snapshot = await getDoc(doc(db, 'caseStudies', convId));
+      
+      if (snapshot.exists()) {
+        return snapshot.id;
+      }
+
+      // Create new case study
+      // Note: serverTimestamp() cannot be used inside arrays, so we use Timestamp.now() for milestone dates
+      const now = Timestamp.now();
+      const caseStudyData = {
+        userId,
+        conversationId: convId,
+        title: `Case #${convId.substring(0, 8).toUpperCase()}`,
+        status: 'In Progress',
+        progress: 10, // Initial progress
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        milestones: [
+          { name: 'Initial Contact', completed: true, date: now },
+          { name: 'Information Gathering', completed: false },
+          { name: 'Case Review', completed: false },
+          { name: 'Action Plan', completed: false },
+          { name: 'Resolution', completed: false }
+        ]
       };
-      setMessages([...messages, newMessage]);
-      setMessage('');
+
+      const caseStudyRef = await setDoc(doc(db, 'caseStudies', convId), caseStudyData);
+      
+      // Update conversation with case study ID
+      await updateDoc(doc(db, 'conversations', convId), {
+        caseStudyId: convId
+      });
+
+      return convId;
+    } catch (error) {
+      console.error('Error creating case study:', error);
+      return null;
     }
   };
 
-  const renderMessage = ({ item }) => (
-    <View style={[
-      styles.messageContainer,
-      item.sender === 'user' ? styles.userMessage : styles.botMessage
-    ]}>
-      <Text style={styles.messageText}>{item.text}</Text>
-    </View>
-  );
+  // Update case progress based on message count
+  const updateCaseProgress = async (convId, messageCount) => {
+    if (!convId) return;
+
+    try {
+      const caseStudyRef = doc(db, 'caseStudies', convId);
+      const caseStudyDoc = await getDoc(caseStudyRef);
+      
+      if (!caseStudyDoc.exists()) return;
+
+      const caseStudy = caseStudyDoc.data();
+      let progress = 10;
+      const milestones = caseStudy.milestones || [];
+
+      // Update progress based on message count and milestones
+      // Note: serverTimestamp() cannot be used inside arrays, so we use Timestamp.now() for milestone dates
+      const now = Timestamp.now();
+      if (messageCount >= 5) {
+        progress = 30;
+        if (milestones[1] && !milestones[1].completed) {
+          milestones[1].completed = true;
+          milestones[1].date = now;
+        }
+      }
+      if (messageCount >= 10) {
+        progress = 50;
+        if (milestones[2] && !milestones[2].completed) {
+          milestones[2].completed = true;
+          milestones[2].date = now;
+        }
+      }
+      if (messageCount >= 15) {
+        progress = 70;
+        if (milestones[3] && !milestones[3].completed) {
+          milestones[3].completed = true;
+          milestones[3].date = now;
+        }
+      }
+      if (messageCount >= 20) {
+        progress = 90;
+        if (milestones[4] && !milestones[4].completed) {
+          milestones[4].completed = true;
+          milestones[4].date = now;
+        }
+      }
+
+      await updateDoc(caseStudyRef, {
+        progress,
+        milestones,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error updating case progress:', error);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    
+    if (!userId) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    let convId = conversationId;
+    
+    // Create conversation if it doesn't exist
+    if (!convId) {
+      convId = await getOrCreateConversation();
+      if (!convId) return;
+      
+      // Update URL to include conversation ID
+      router.replace(`/screens/chat?id=${convId}&name=${params.name || 'Child Protection Services'}`);
+    }
+
+    try {
+      // Create case study on first message
+      if (messages.length === 0) {
+        await createCaseStudy(convId);
+      }
+
+      // Save message to Firebase
+      const messagesRef = collection(db, 'conversations', convId, 'messages');
+      await addDoc(messagesRef, {
+        text: message.trim(),
+        sender: 'user',
+        userId,
+        createdAt: serverTimestamp(),
+      });
+
+      // Update conversation with last message
+      const conversationRef = doc(db, 'conversations', convId);
+      await updateDoc(conversationRef, {
+        lastMessage: message.trim().substring(0, 50) + (message.trim().length > 50 ? '...' : ''),
+        lastMessageTime: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update case progress
+      await updateCaseProgress(convId, messages.length + 1);
+
+      setMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const renderMessage = ({ item }) => {
+    const time = item.createdAt 
+      ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : item.time || '';
+
+    return (
+      <View style={[
+        styles.messageContainer,
+        item.sender === 'user' ? styles.userMessage : styles.botMessage
+      ]}>
+        <Text style={styles.messageText}>{item.text}</Text>
+        {time && <Text style={styles.messageTime}>{time}</Text>}
+      </View>
+    );
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -73,10 +277,23 @@ export default function ChatScreen() {
       </View>
 
       <FlatList
+        ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messagesList}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Loading messages...</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No messages yet. Start the conversation!</Text>
+            </View>
+          )
+        }
       />
 
       <View style={styles.inputContainer}>
@@ -137,6 +354,11 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  messageTime: {
+    fontSize: 10,
+    marginTop: 4,
+    opacity: 0.7,
   },
   inputContainer: {
     flexDirection: 'row',
