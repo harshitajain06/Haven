@@ -42,7 +42,7 @@ export default function HomeScreen() {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
 
-    const postRef = doc(db, 'posts', postId);
+    const postRef = doc(db, 'postshaven', postId);
     const hasLiked = likes.includes(userId);
 
     try {
@@ -134,9 +134,12 @@ export default function HomeScreen() {
             <Text style={styles.actionText}>{item.likeCount || 0} Likes</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push(`/screens/comments?postId=${item.id}`)}
+          >
             <Ionicons name="chatbubble-outline" size={24} color="#666" />
-            <Text style={styles.actionText}>Comment</Text>
+            <Text style={styles.actionText}>{item.commentCount || 0} Comments</Text>
           </TouchableOpacity>
         </View>
       </View>
