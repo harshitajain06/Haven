@@ -1,12 +1,33 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { auth } from '../../config/firebase';
+import { auth, db } from '../../config/firebase';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const user = auth.currentUser;
+  const [postCount, setPostCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPostCount = async () => {
+      if (!user?.uid) return;
+
+      try {
+        const q = query(
+          collection(db, 'postshaven'),
+          where('userId', '==', user.uid)
+        );
+        const snapshot = await getDocs(q);
+        setPostCount(snapshot.size);
+      } catch (error) {
+        console.error('Error fetching post count:', error);
+      }
+    };
+
+    fetchPostCount();
+  }, [user?.uid]);
 
   return (
     <ScrollView style={styles.container}>
@@ -28,7 +49,7 @@ export default function ProfileScreen() {
 
       <View style={styles.statsSection}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>0</Text>
+          <Text style={styles.statValue}>{postCount}</Text>
           <Text style={styles.statLabel}>Posts</Text>
         </View>
         <View style={styles.statItem}>
@@ -42,24 +63,6 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.menuSection}>
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/screens/messages')}
-        >
-          <Ionicons name="chatbubbles-outline" size={24} color="#000" />
-          <Text style={styles.menuText}>Messages</Text>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/screens/notifications')}
-        >
-          <Ionicons name="notifications-outline" size={24} color="#000" />
-          <Text style={styles.menuText}>Notifications</Text>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
-
         <TouchableOpacity 
           style={styles.menuItem}
           onPress={() => router.push('/screens/settings')}

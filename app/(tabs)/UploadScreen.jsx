@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { addDoc, collection } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import React, { useMemo, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db, storage } from '../../config/firebase';
 
 export default function UploadScreen() {
@@ -111,7 +111,11 @@ export default function UploadScreen() {
 
       {mediaUri && (
         <View style={styles.mediaPreview}>
-          <Image source={{ uri: mediaUri }} style={styles.previewImage} />
+          <Image 
+            source={{ uri: mediaUri }} 
+            style={styles.previewImage}
+            resizeMode={Platform.OS === 'web' ? 'contain' : 'cover'}
+          />
           <TouchableOpacity 
             style={styles.removeButton}
             onPress={() => setMediaUri(null)}
@@ -210,7 +214,18 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     width: '100%',
-    height: 200,
+    ...(Platform.OS === 'web' 
+      ? {
+          maxHeight: 600,
+          minHeight: 300,
+        }
+      : {
+          height: 400,
+          aspectRatio: 16 / 9,
+        }
+    ),
+    backgroundColor: '#fff',
+    alignSelf: 'center',
     borderRadius: 10,
   },
   removeButton: {
