@@ -177,9 +177,7 @@ export default function HomeScreen() {
               </Animated.View>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => router.push('/screens/notifications')}>
-            <Ionicons name="notifications-outline" size={28} color="#000" />
-          </TouchableOpacity>
+          {/* notifications icon removed */}
         </View>
       </View>
 

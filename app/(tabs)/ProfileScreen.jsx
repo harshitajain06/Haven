@@ -30,19 +30,18 @@ export default function ProfileScreen() {
   }, [user?.uid]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={() => router.push('/screens/settings')}>
-          <Ionicons name="settings-outline" size={28} color="#000" />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.profileSection}>
-        <Image 
-          source={user?.photoURL ? { uri: user.photoURL } : require('../../assets/images/img_profile_picture.png')}
-          style={styles.profileImage}
-        />
+        <View style={styles.profileImageContainer}>
+          <Image 
+            source={user?.photoURL ? { uri: user.photoURL } : require('../../assets/images/img_profile_picture.png')}
+            style={styles.profileImage}
+          />
+        </View>
         <Text style={styles.userName}>{user?.displayName || 'Ardito Saputra'}</Text>
         <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
       </View>
@@ -52,25 +51,9 @@ export default function ProfileScreen() {
           <Text style={styles.statValue}>{postCount}</Text>
           <Text style={styles.statLabel}>Posts</Text>
         </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>0</Text>
-          <Text style={styles.statLabel}>Followers</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>0</Text>
-          <Text style={styles.statLabel}>Following</Text>
-        </View>
       </View>
 
       <View style={styles.menuSection}>
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/screens/settings')}
-        >
-          <Ionicons name="settings-outline" size={24} color="#000" />
-          <Text style={styles.menuText}>Settings</Text>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -79,7 +62,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -87,54 +70,95 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 50,
-    paddingBottom: 15,
+    paddingBottom: 20,
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#F0F0F0',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#000',
   },
   profileSection: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 40,
+    backgroundColor: '#FFF',
+    marginBottom: 20,
+  },
+  profileImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 4,
+    borderColor: '#007AFF',
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: '100%',
+    height: '100%',
     backgroundColor: '#E0E0E0',
-    marginBottom: 15,
   },
   userName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 26,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#000',
   },
   userEmail: {
+    fontSize: 15,
+    color: '#888',
+    marginBottom: 20,
+    fontWeight: '500',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 8,
+    marginTop: 10,
+  },
+  editButtonText: {
+    color: '#FFF',
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
   },
   statsSection: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#E0E0E0',
+    paddingVertical: 25,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFF',
     marginHorizontal: 20,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
   },
   statItem: {
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#007AFF',
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
+    fontWeight: '600',
   },
   menuSection: {
     padding: 20,

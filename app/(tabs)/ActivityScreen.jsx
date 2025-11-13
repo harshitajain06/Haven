@@ -9,7 +9,7 @@ export default function ActivityScreen() {
   const activities = [
     { icon: 'chatbubbles-outline', title: 'Messages', route: '/screens/messages' },
     { icon: 'calendar-outline', title: 'Case Progress', route: '/screens/case-progress' },
-    { icon: 'game-controller-outline', title: 'Games', route: '/screens/games' },
+    { icon: 'game-controller-outline', title: 'Games', route: '/screens/gamesScreen' },
     { icon: 'eye-outline', title: 'Adult Zone', route: '/screens/adult-zone' },
   ];
 
