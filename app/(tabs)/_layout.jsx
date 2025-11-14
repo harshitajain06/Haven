@@ -74,7 +74,7 @@ const DrawerNavigator = () => {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        navigation.replace("LoginRegister");
+        navigation.replace("login");
       })
       .catch((err) => {
         console.error("Logout Error:", err);
